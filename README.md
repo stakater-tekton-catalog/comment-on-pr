@@ -1,2 +1,15 @@
-# comment-on-pr
-A tekton task for comment-on-pr
+# Stakater Cluster Task for Commenting on PR
+
+## Local Development
+
+### Install
+
+```
+tilt up
+```
+
+### Teardown
+
+```
+tilt down
+```
