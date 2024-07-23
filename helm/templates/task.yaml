@@ -39,10 +39,10 @@ spec:
               GIT_TOKEN=`cat $FILE`
               curl -s -H "Authorization: token ${GIT_TOKEN}" \
               -X POST -d '{"body": "Tekton - Pipeline ran successfully and image `$(params.IMAGE_NAME)` is available"}' \
-              "https://api.github.com/repos/${REPO_NAME}/issues/$(params.PR_NUMBER)/comments"
+              "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
             else
               curl -s -X POST -d '{"body": "Tekton - Pipeline ran successfully and image `$(params.IMAGE_NAME)` is available"}' \
-              "https://api.github.com/repos/${REPO_NAME}/issues/$(params.PR_NUMBER)/comments"
+              "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
             fi
           else
             echo "Not a PR so cant comment"
