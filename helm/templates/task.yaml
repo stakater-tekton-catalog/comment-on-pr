@@ -46,7 +46,7 @@ spec:
               ENVIRONMENT_NS=$(yq .metadata.name /workspace/source/environment/environment.yaml)
               if oc get route -n $ENVIRONMENT_NS | grep -q .; then
                 ROUTE=$(oc get route -n $ENVIRONMENT_NS -o=jsonpath={.items[].spec.host})
-                JSON=$(printf '{"body": "Tekton - Pipeline ran successfully and route %s is available"}' "${ROUTE}")
+                JSON=$(printf '{"body": "Tekton - Pipeline ran successfully and route https://%s is available"}' "${ROUTE}")
                 curl -s -H "Authorization: token ${GIT_TOKEN}" -d "$JSON" -X POST \
                 "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
               else
@@ -59,7 +59,7 @@ spec:
               ENVIRONMENT_NS=$(yq .metadata.name /workspace/source/environment/environment.yaml)
               if oc get route -n $ENVIRONMENT_NS | grep -q .; then
                 ROUTE=$(oc get route -n $ENVIRONMENT_NS -o=jsonpath={.items[].spec.host})
-                JSON=$(printf '{"body": "Tekton - Pipeline ran successfully and route %s is available"}' "${ROUTE}")
+                JSON=$(printf '{"body": "Tekton - Pipeline ran successfully and route https://%s is available"}' "${ROUTE}")
                 curl -s -H "Authorization: token ${GIT_TOKEN}" -d "$JSON" -X POST \
                 "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
               else
