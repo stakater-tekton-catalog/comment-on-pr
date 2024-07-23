@@ -9,7 +9,7 @@ spec:
     - name: repo-token
       optional: true
   params:
-    - name: IMAGE
+    - name: IMAGE_NAME
       description: Reference of the image buildah will produce.
       type: string
     - name: PR_NUMBER
@@ -38,10 +38,10 @@ spec:
               echo "$FILE exists."
               GIT_TOKEN=`cat $FILE`
               curl -s -H "Authorization: token ${GIT_TOKEN}" \
-              -X POST -d '{"body": "Tekton - Pipeline ran successfully and image `$(params.IMAGE)` is available"}' \
+              -X POST -d '{"body": "Tekton - Pipeline ran successfully and image `$(params.IMAGE_NAME)` is available"}' \
               "https://api.github.com/repos/${REPO_NAME}/issues/$(params.PR_NUMBER)/comments"
             else
-              curl -s -X POST -d '{"body": "Tekton - Pipeline ran successfully and image `$(params.IMAGE)` is available"}' \
+              curl -s -X POST -d '{"body": "Tekton - Pipeline ran successfully and image `$(params.IMAGE_NAME)` is available"}' \
               "https://api.github.com/repos/${REPO_NAME}/issues/$(params.PR_NUMBER)/comments"
             fi
           else
