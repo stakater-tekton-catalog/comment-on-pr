@@ -6,6 +6,7 @@ metadata:
     app.kubernetes.io/version: "{{ .Chart.Version }}"
 spec:
   workspaces:
+    - name: source
     - name: repo-token
       optional: true
   params:
@@ -37,12 +38,33 @@ spec:
               FILE="/workspace/repo-token/$token"
               echo "$FILE exists."
               GIT_TOKEN=`cat $FILE`
+              
               curl -s -H "Authorization: token ${GIT_TOKEN}" \
               -X POST -d '{"body": "Tekton - Pipeline ran successfully and image `$(params.IMAGE_NAME)` is available"}' \
               "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
+
+              ENVIRONMENT_NS=$(yq .metadata.name /workspace/source/environment/environment.yaml)
+              if oc get route -n $ENVIRONMENT_NS | grep -q .; then
+                ROUTE=$(oc get route -n $ENVIRONMENT_NS -o=jsonpath={.items[].spec.host})
+                curl -s -H "Authorization: token ${GIT_TOKEN}" \
+                -X POST -d '{"body": "Tekton - Pipeline ran successfully and route `$ROUTE` is available"}' \
+                "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
+              else
+                echo "Route does not exist in this app"
+              fi
             else
               curl -s -X POST -d '{"body": "Tekton - Pipeline ran successfully and image `$(params.IMAGE_NAME)` is available"}' \
               "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
+              
+              ENVIRONMENT_NS=$(yq .metadata.name /workspace/source/environment/environment.yaml)
+              if oc get route -n $ENVIRONMENT_NS | grep -q .; then
+                ROUTE=$(oc get route -n $ENVIRONMENT_NS -o=jsonpath={.items[].spec.host})
+                curl -s -H "Authorization: token ${GIT_TOKEN}" \
+                -X POST -d '{"body": "Tekton - Pipeline ran successfully and route `$ROUTE` is available"}' \
+                "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
+              else
+                echo "Route does not exist in this app"
+              fi
             fi
           else
             echo "Not a PR so cant comment"
