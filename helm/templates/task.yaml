@@ -46,8 +46,8 @@ spec:
               ENVIRONMENT_NS=$(yq .metadata.name /workspace/source/environment/environment.yaml)
               if oc get route -n $ENVIRONMENT_NS | grep -q .; then
                 ROUTE=$(oc get route -n $ENVIRONMENT_NS -o=jsonpath={.items[].spec.host})
-                curl -s -H "Authorization: token ${GIT_TOKEN}" \
-                -X POST -d '{"body": "Tekton - Pipeline ran successfully and route `${ROUTE}` is available"}' \
+                JSON=$(printf '{"body": "Tekton - Pipeline ran successfully and route %s is available"}' "${ROUTE}")
+                curl -s -H "Authorization: token ${GIT_TOKEN}" -d "$JSON" -X POST \
                 "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
               else
                 echo "Route does not exist in this app"
@@ -59,8 +59,8 @@ spec:
               ENVIRONMENT_NS=$(yq .metadata.name /workspace/source/environment/environment.yaml)
               if oc get route -n $ENVIRONMENT_NS | grep -q .; then
                 ROUTE=$(oc get route -n $ENVIRONMENT_NS -o=jsonpath={.items[].spec.host})
-                curl -s -H "Authorization: token ${GIT_TOKEN}" \
-                -X POST -d '{"body": "Tekton - Pipeline ran successfully and route `${ROUTE}` is available"}' \
+                JSON=$(printf '{"body": "Tekton - Pipeline ran successfully and route %s is available"}' "${ROUTE}")
+                curl -s -H "Authorization: token ${GIT_TOKEN}" -d "$JSON" -X POST \
                 "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
               else
                 echo "Route does not exist in this app"
