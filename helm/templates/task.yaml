@@ -7,39 +7,65 @@ metadata:
 spec:
   workspaces:
     - name: source
+    - name: repo-token
+      optional: true
   params:
-    - name: IMAGE
+    - name: IMAGE_NAME
       description: Reference of the image buildah will produce.
       type: string
     - name: PR_NUMBER
       description: In case of PR, PR number that is to be used in image tag. If this field is empty it means that it's a commit on main branch
       default: "NA"
-    - name: GIT_REPOSITORY_URL
+    - name: REPO_NAME
       description: The git repository url
-    - name: GIT_SECRET_NAME
+    - name: GIT_PAT_KEY
+      default: 'password'
+      description: Git PAT secret reference key
       type: string
-      description: secret name with github/gitlab credentials of repo
-      default: "git-token"
   steps:
     - name: comment-on-pr
       image: ghcr.io/stakater/pipeline-toolbox:v0.0.37
       command: ["/bin/bash"]
       env:
-      - name: GIT_TOKEN
-        valueFrom:
-          secretKeyRef:
-            key: token
-            name: $(params.GIT_SECRET_NAME)
+      - name: WORKSPACE_REPO_TOKEN_BOUND
+        value: $(workspaces.repo-token.bound)
       args:
         - -c
         - |
           if [ $(params.PR_NUMBER) != "NA" ]; then
-            REPO_URL=$(params.GIT_REPOSITORY_URL)
-            REPO_NAME=${REPO_URL#*$".com"} 
-            REPO_NAME=${REPO_NAME:1}
-            curl -s -H "Authorization: token ${GIT_TOKEN}" \
-            -X POST -d '{"body": "Tekton - Pipeline ran successfully and image `$(params.IMAGE)` is available"}' \
-            "https://api.github.com/repos/${REPO_NAME}/issues/$(params.PR_NUMBER)/comments"
+            if [ "${WORKSPACE_REPO_TOKEN_BOUND}" = "true"  ]; then
+              token="$(params.GIT_PAT_KEY)"
+              FILE="/workspace/repo-token/$token"
+              echo "$FILE exists."
+              GIT_TOKEN=`cat $FILE`
+              
+              curl -s -H "Authorization: token ${GIT_TOKEN}" \
+              -X POST -d '{"body": "Tekton - Pipeline ran successfully and image `$(params.IMAGE_NAME)` is available"}' \
+              "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
+
+              ENVIRONMENT_NS=$(yq .metadata.name /workspace/source/environment/environment.yaml)
+              if oc get route -n $ENVIRONMENT_NS | grep -q .; then
+                ROUTE=$(oc get route -n $ENVIRONMENT_NS -o=jsonpath={.items[].spec.host})
+                JSON=$(printf '{"body": "Tekton - Pipeline ran successfully and route https://%s is available"}' "${ROUTE}")
+                curl -s -H "Authorization: token ${GIT_TOKEN}" -d "$JSON" -X POST \
+                "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
+              else
+                echo "Route does not exist in this app"
+              fi
+            else
+              curl -s -X POST -d '{"body": "Tekton - Pipeline ran successfully and image `$(params.IMAGE_NAME)` is available"}' \
+              "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
+              
+              ENVIRONMENT_NS=$(yq .metadata.name /workspace/source/environment/environment.yaml)
+              if oc get route -n $ENVIRONMENT_NS | grep -q .; then
+                ROUTE=$(oc get route -n $ENVIRONMENT_NS -o=jsonpath={.items[].spec.host})
+                JSON=$(printf '{"body": "Tekton - Pipeline ran successfully and route https://%s is available"}' "${ROUTE}")
+                curl -s -H "Authorization: token ${GIT_TOKEN}" -d "$JSON" -X POST \
+                "https://api.github.com/repos/$(params.REPO_NAME)/issues/$(params.PR_NUMBER)/comments"
+              else
+                echo "Route does not exist in this app"
+              fi
+            fi
           else
             echo "Not a PR so cant comment"
           fi
