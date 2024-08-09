@@ -24,7 +24,7 @@ spec:
       type: string
   steps:
     - name: comment-on-pr
-      image: ghcr.io/stakater/pipeline-toolbox:v0.0.37
+      image: ghcr.io/stakater/pipeline-toolbox:v0.0.41
       command: ["/bin/bash"]
       env:
       - name: WORKSPACE_REPO_TOKEN_BOUND
